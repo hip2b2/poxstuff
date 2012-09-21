@@ -1,0 +1,11 @@
+--- libopenflow_01.py.old	2012-09-20 20:33:10.161595731 -0700
++++ libopenflow_01.py	2012-09-20 20:32:43.373576815 -0700
+@@ -2663,7 +2663,7 @@
+ 
+ class ofp_port_stats_request (object):
+   def __init__ (self, **kw):
+-    self.port_no = 0
++    self.port_no = OFPP_NONE
+     initHelper(self, kw)
+ 
+   def _assert (self):
