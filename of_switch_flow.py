@@ -168,6 +168,16 @@ class Tutorial (object):
       self.send_packet(packet_in.buffer_id, packet_in.data,
                        of.OFPP_FLOOD, packet_in.in_port)
 
+  def _handle_PortStatus (self, event):
+    """
+    Returns on change of port status
+    """
+    if event.added:
+      log.debug("HW Address %s to port %d added (%d).",
+        event.ofp.desc.hw_addr, event.port, event.dpid)
+    elif event.deleted:
+      log.debug("Port %d deleted (%d).",
+        event.port, event.dpid)
 
   def _handle_PacketIn (self, event):
     """
