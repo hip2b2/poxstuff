@@ -212,7 +212,8 @@ def _handle_IdealPair_PacketIn (event):
       packet.src, event.ofp.in_port, packet.dst, dst_port))
 
 # function that is invoked upon load to ensure that listeners are
-# registered appropriately.
+# registered appropriately. Uncomment the hub/switch you would like 
+# to test. Only one at a time please.
 def launch ():
   #core.openflow.addListenerByName("PacketIn", _handle_DumbHub_PacketIn)
   #core.openflow.addListenerByName("PacketIn", _handle_PairHub_PacketIn)
