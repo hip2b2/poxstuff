@@ -110,11 +110,11 @@ def _handle_BadSwitch_PacketIn (event):
   msg.actions.append(of.ofp_action_output(port = event.port))
   event.connection.send(msg)
 
-  log.debug("Installing %s.%i -> %s.%i" %
-    (packet.src, event.ofp.in_port, packet.dst, dst_port))
-
   # determine if appropriate destination route is available
   dst_port = table.get((event.connection,packet.dst))
+
+  log.debug("Installing %s.%i -> %s.%i" %
+    ("ff:ff:ff:ff:ff:ff", event.ofp.in_port, packet.src, event.port))
 
   if dst_port is None:
     # We don't know where the destination is yet. So, we'll just
@@ -226,8 +226,8 @@ def launch ():
   #core.openflow.addListenerByName("PacketIn", _handle_DumbHub_PacketIn)
   #core.openflow.addListenerByName("PacketIn", _handle_PairHub_PacketIn)
   #core.openflow.addListenerByName("PacketIn", _handle_LazyHub_PacketIn)
-  core.openflow.addListenerByName("PacketIn", _handle_BadSwitch_PacketIn)
+  #core.openflow.addListenerByName("PacketIn", _handle_BadSwitch_PacketIn)
   #core.openflow.addListenerByName("PacketIn", _handle_Pair_PacketIn)
-  #core.openflow.addListenerByName("PacketIn", _handle_IdealPair_PacketIn)
+  core.openflow.addListenerByName("PacketIn", _handle_IdealPair_PacketIn)
 
   log.info("Switch Tutorial is running.")

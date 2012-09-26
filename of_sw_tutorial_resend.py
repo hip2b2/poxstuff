@@ -116,7 +116,7 @@ def _handle_BadSwitch_PacketIn (event):
   msg.send(event.connection)
 
   log.debug("Installing %s.%i -> %s.%i" %
-    (packet.src, event.ofp.in_port, packet.dst, dst_port))
+    ("ff:ff:ff:ff:ff:ff", event.ofp.in_port, packet.src, event.port))
 
   # determine if appropriate destination route is available
   dst_port = table.get((event.connection,packet.dst))
