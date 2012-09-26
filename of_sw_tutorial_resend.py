@@ -22,6 +22,8 @@
 # destination match, pair match then finally a more ideal pair match 
 # switch.
 #
+# THIS VERSION SUPPORT resend() functionality in the betta branch POX.
+#
 
 # These next two imports are common POX convention
 from pox.core import core
@@ -39,16 +41,19 @@ table = {}
 def send_packet (event, dst_port = of.OFPP_ALL):
   msg = of.ofp_packet_out(in_port=event.ofp.in_port)
   if event.ofp.buffer_id != -1 and event.ofp.buffer_id is not None:
-    # We got a buffer ID from the switch; use that
     msg.buffer_id = event.ofp.buffer_id
   else:
-    # No buffer ID from switch -- we got the raw data
     if event.ofp.data:
-      # No raw_data specified -- nothing to send!
       return
     msg.data = event.ofp.data
   msg.actions.append(of.ofp_action_output(port = dst_port))
   event.connection.send(msg)
+
+# Optimal method for resending a packet
+def resend_packet (event, dst_port = of.OFPP_ALL):
+  msg = of.ofp_packet_out(resend = event.ofp)
+  msg.actions.append(of.ofp_action_output(port = dst_port))
+  msg.send(event.connection)
 
 # DUMB HUB Implementation
 # This is an implementation of a broadcast hub but all packets go 
@@ -56,7 +61,7 @@ def send_packet (event, dst_port = of.OFPP_ALL):
 def _handle_DumbHub_PacketIn (event):
   # Just send an instruction to the switch to send packet to all ports
   packet = event.parsed
-  send_packet(event, of.OFPP_ALL)
+  resend_packet(event, of.OFPP_ALL)
 
   log.debug("Broadcasting %s.%i -> %s.%i" %
     (packet.src, event.ofp.in_port, packet.dst, of.OFPP_ALL))
@@ -73,7 +78,7 @@ def _handle_PairHub_PacketIn (event):
   msg.match.dl_src = packet.src
   msg.match.dl_dst = packet.dst
   msg.actions.append(of.ofp_action_output(port = of.OFPP_ALL))
-  event.connection.send(msg)
+  msg.send(event.connection, resend = event.ofp)
 
   log.debug("Installing %s.%i -> %s.%i" %
     (packet.src, event.ofp.in_port, packet.dst, of.OFPP_ALL))
@@ -88,7 +93,7 @@ def _handle_LazyHub_PacketIn (event):
   msg.idle_timeout = 10
   msg.hard_timeout = 30
   msg.actions.append(of.ofp_action_output(port = of.OFPP_ALL))
-  event.connection.send(msg)
+  msg.send(event.connection, resend = event.ofp)
 
   log.debug("Installing %s.%i -> %s.%i" %
     ("ff:ff:ff:ff:ff:ff", event.ofp.in_port, "ff:ff:ff:ff:ff:ff", of.OFPP_ALL))
@@ -108,7 +113,7 @@ def _handle_BadSwitch_PacketIn (event):
   msg.hard_timeout = 30
   msg.match.dl_dst = packet.src
   msg.actions.append(of.ofp_action_output(port = event.port))
-  event.connection.send(msg)
+  msg.send(event.connection)
 
   log.debug("Installing %s.%i -> %s.%i" %
     (packet.src, event.ofp.in_port, packet.dst, dst_port))
@@ -123,14 +128,14 @@ def _handle_BadSwitch_PacketIn (event):
     # To send out all ports, we can use either of the special ports
     # OFPP_FLOOD or OFPP_ALL. We'd like to just use OFPP_FLOOD,
     # but it's not clear if all switches support this. :(
-    send_packet(event, of.OFPP_ALL)
+    resend_packet(event, of.OFPP_ALL)
 
     log.debug("Broadcasting %s.%i -> %s.%i" %
       (packet.src, event.ofp.in_port, packet.dst, of.OFPP_ALL))
   else:   
     # This is the packet that just came in -- we want send the packet
     # if we know the destination.
-    send_packet(event, dst_port)
+    resend_packet(event, dst_port)
 
     log.debug("Sending %s.%i -> %s.%i" %
       (packet.src, event.ofp.in_port, packet.dst, dst_port))
@@ -155,7 +160,7 @@ def _handle_Pair_PacketIn (event):
     # To send out all ports, we can use either of the special ports
     # OFPP_FLOOD or OFPP_ALL. We'd like to just use OFPP_FLOOD,
     # but it's not clear if all switches support this. :(
-    send_packet(event, of.OFPP_ALL)
+    resend_packet(event, of.OFPP_ALL)
 
     log.debug("Broadcasting %s.%i -> %s.%i" %
       (packet.src, event.ofp.in_port, packet.dst, of.OFPP_ALL))
@@ -168,7 +173,7 @@ def _handle_Pair_PacketIn (event):
     msg.match.dl_src = packet.src
     msg.match.dl_dst = packet.dst
     msg.actions.append(of.ofp_action_output(port = dst_port))
-    event.connection.send(msg)
+    msg.send(event.connection, resend = event.ofp)
 
     log.debug("Installing %s.%i -> %s.%i" %
       (packet.src, event.ofp.in_port, packet.dst, dst_port))
@@ -190,7 +195,7 @@ def _handle_IdealPair_PacketIn (event):
     # To send out all ports, we can use either of the special ports
     # OFPP_FLOOD or OFPP_ALL. We'd like to just use OFPP_FLOOD,
     # but it's not clear if all switches support this. :(
-    send_packet(event, of.OFPP_ALL)
+    resend_packet(event, of.OFPP_ALL)
 
     log.debug("Broadcasting %s.%i -> %s.%i" %
       (packet.src, event.ofp.in_port, packet.dst, of.OFPP_ALL))
@@ -203,7 +208,7 @@ def _handle_IdealPair_PacketIn (event):
     msg.match.dl_dst = packet.src
     msg.match.dl_src = packet.dst
     msg.actions.append(of.ofp_action_output(port = event.port))
-    event.connection.send(msg)
+    msg.send(event.connection)
     
     # This is the packet that just came in -- we want to
     # install the rule and also resend the packet.
@@ -213,7 +218,7 @@ def _handle_IdealPair_PacketIn (event):
     msg.match.dl_src = packet.src
     msg.match.dl_dst = packet.dst
     msg.actions.append(of.ofp_action_output(port = dst_port))
-    event.connection.send(msg)
+    msg.send(event.connection, resend = event.ofp)
 
     log.debug("Installing %s.%i -> %s.%i AND %s.%i -> %s.%i" %
       (packet.dst, dst_port, packet.src, event.ofp.in_port,
@@ -226,8 +231,8 @@ def launch ():
   #core.openflow.addListenerByName("PacketIn", _handle_DumbHub_PacketIn)
   #core.openflow.addListenerByName("PacketIn", _handle_PairHub_PacketIn)
   #core.openflow.addListenerByName("PacketIn", _handle_LazyHub_PacketIn)
-  core.openflow.addListenerByName("PacketIn", _handle_BadSwitch_PacketIn)
+  #core.openflow.addListenerByName("PacketIn", _handle_BadSwitch_PacketIn)
   #core.openflow.addListenerByName("PacketIn", _handle_Pair_PacketIn)
-  #core.openflow.addListenerByName("PacketIn", _handle_IdealPair_PacketIn)
+  core.openflow.addListenerByName("PacketIn", _handle_IdealPair_PacketIn)
 
   log.info("Switch Tutorial is running.")
