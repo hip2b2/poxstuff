@@ -7,6 +7,7 @@
 
 # standard includes
 from pox.core import core
+from pox.lib.util import dpidToStr
 import pox.openflow.libopenflow_01 as of
 
 # include as part of the betta branch
@@ -23,14 +24,30 @@ def _timer_func ():
   log.debug("Sent %i flow/port stats request(s)", len(core.openflow._connections))
 
 # handler to display flow statistics received in JSON format
+# structure of event.stats is defined by ofp_flow_stats()
 def handle_FlowStatsReceived(event):
   stats = flow_stats_to_list(event.stats)
-  log.debug("FlowStatsReceived %s", stats)
+  log.debug("FlowStatsReceived from %s: %s", 
+    dpidToStr(event.connection.dpid), stats)
+
+  # Get number of bytes/packets in flows for web traffic only
+  web_bytes = 0
+  web_flows = 0
+  web_packet = 0
+  for f in event.stats:
+    if f.match.tp_dst == 80 or f.match.tp_src == 80:
+      web_bytes += f.byte_count
+      web_packet += f.packet_count
+      web_flows += 1
+  log.info("Web traffic from %s: %s bytes (%s packets) over %s flows", 
+    dpidToStr(event.connection.dpid), web_bytes, web_packet, web_flows)
+
 
 # handler to display port statistics received in JSON format
 def handle_PortStatsReceived(event):
   stats = flow_stats_to_list(event.stats)
-  log.debug("PortStatsReceived %s", stats)
+  log.debug("PortStatsReceived from %s: %s", 
+    dpidToStr(event.connection.dpid), stats)
     
 def launch ():
   from pox.lib.recoco import Timer
