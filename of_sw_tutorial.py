@@ -22,6 +22,9 @@
 # destination match, pair match then finally a more ideal pair match 
 # switch.
 #
+# Mininet Command Line: sudo mn --topo single,3 --mac --switch ovsk --controller remote
+# Command Line: ./pox.py log.level --DEBUG samples.of_sw_tutorial
+#
 
 # These next two imports are common POX convention
 from pox.core import core

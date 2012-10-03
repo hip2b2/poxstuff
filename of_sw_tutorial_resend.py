@@ -22,6 +22,9 @@
 # destination match, pair match then finally a more ideal pair match 
 # switch.
 #
+# Mininet Command Line: sudo mn --topo single,3 --mac --switch ovsk --controller remote
+# Command Line: ./pox.py py log.level --DEBUG samples.of_sw_tutorial_resend
+
 # THIS VERSION SUPPORT resend() functionality in the betta branch POX.
 #
 
