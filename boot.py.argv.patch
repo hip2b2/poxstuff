@@ -1,0 +1,11 @@
+--- pox/boot.py.old	2012-10-03 02:27:06.791970860 -0700
++++ pox/boot.py	2012-10-03 02:38:22.566891255 -0700
+@@ -127,7 +127,7 @@
+   curargs = {}
+   pox_options = curargs
+ 
+-  for arg in argv:
++  for arg in sys.argv[1:]:
+     if not arg.startswith("-"):
+       if arg not in components:
+         components[arg] = []
