@@ -1,9 +1,28 @@
 #!/usr/bin/python
+# Copyright 2012 William Yu
 # wyu@ateneo.edu
 #
-# This is a demonstration file created to show how to obtain flow 
-# and port statistics from OpenFlow 1.0-enabled switches.
+# This file is part of POX.
 #
+# POX is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# POX is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with POX. If not, see <http://www.gnu.org/licenses/>.
+#
+
+"""
+This is a demonstration file created to show how to obtain flow 
+and port statistics from OpenFlow 1.0-enabled switches. The flow
+statistics handler contains a summary of web-only traffic.
+"""
 
 # standard includes
 from pox.core import core
@@ -25,7 +44,7 @@ def _timer_func ():
 
 # handler to display flow statistics received in JSON format
 # structure of event.stats is defined by ofp_flow_stats()
-def handle_FlowStatsReceived(event):
+def _handle_flowstats_received (event):
   stats = flow_stats_to_list(event.stats)
   log.debug("FlowStatsReceived from %s: %s", 
     dpidToStr(event.connection.dpid), stats)
@@ -42,19 +61,21 @@ def handle_FlowStatsReceived(event):
   log.info("Web traffic from %s: %s bytes (%s packets) over %s flows", 
     dpidToStr(event.connection.dpid), web_bytes, web_packet, web_flows)
 
-
 # handler to display port statistics received in JSON format
-def handle_PortStatsReceived(event):
+def _handle_portstats_received (event):
   stats = flow_stats_to_list(event.stats)
   log.debug("PortStatsReceived from %s: %s", 
     dpidToStr(event.connection.dpid), stats)
     
+# main functiont to launch the module
 def launch ():
   from pox.lib.recoco import Timer
 
   # attach handsers to listners
-  core.openflow.addListenerByName("FlowStatsReceived", handle_FlowStatsReceived) 
-  core.openflow.addListenerByName("PortStatsReceived", handle_PortStatsReceived) 
+  core.openflow.addListenerByName("FlowStatsReceived", 
+    _handle_flowstats_received) 
+  core.openflow.addListenerByName("PortStatsReceived", 
+    _handle_portstats_received) 
 
   # timer set to execute every five seconds
   Timer(5, _timer_func, recurring=True)

@@ -17,14 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along with POX. If not, see <http://www.gnu.org/licenses/>.
 #
-# This is a demonstration file that has various switch implementations.
-# The first example is a basic "all match" switch followed by a 
-# destination match, pair match then finally a more ideal pair match 
-# switch.
-#
-# Mininet Command Line: sudo mn --topo single,3 --mac --switch ovsk --controller remote
-# Command Line: ./pox.py log.level --DEBUG samples.of_sw_tutorial
-#
+"""
+This is a demonstration file that has various switch implementations.
+The first example is a basic "all match" switch followed by a 
+destination match, pair match then finally a more ideal pair match 
+switch.
+
+Mininet: sudo mn --topo single,3 --mac --switch ovsk --controller remote
+Command Line: ./pox.py log.level --DEBUG samples.of_sw_tutorial
+"""
 
 # These next two imports are common POX convention
 from pox.core import core
@@ -56,7 +57,7 @@ def send_packet (event, dst_port = of.OFPP_ALL):
 # DUMB HUB Implementation
 # This is an implementation of a broadcast hub but all packets go 
 # to the controller since no flows are installed.
-def _handle_DumbHub_PacketIn (event):
+def _handle_dumbhub_packetin (event):
   # Just send an instruction to the switch to send packet to all ports
   packet = event.parsed
   send_packet(event, of.OFPP_ALL)
@@ -66,7 +67,7 @@ def _handle_DumbHub_PacketIn (event):
 
 # PAIR-WISE MATCHING HUB Implementation
 # This is an implementation of a broadcast hub with flows installed.
-def _handle_PairHub_PacketIn (event):
+def _handle_pairhub_packetin (event):
   packet = event.parsed
 
   # Create flow that simply broadcasts any packet received
@@ -83,7 +84,7 @@ def _handle_PairHub_PacketIn (event):
 
 # LAZY HUB Implementation (How hubs typically are)
 # This is an implementation of a broadcast hub with flows installed.
-def _handle_LazyHub_PacketIn (event):
+def _handle_lazyhub_packetin (event):
   packet = event.parsed
 
   # Create flow that simply broadcasts any packet received
@@ -94,12 +95,13 @@ def _handle_LazyHub_PacketIn (event):
   event.connection.send(msg)
 
   log.debug("Installing %s.%i -> %s.%i" %
-    ("ff:ff:ff:ff:ff:ff", event.ofp.in_port, "ff:ff:ff:ff:ff:ff", of.OFPP_ALL))
+    ("ff:ff:ff:ff:ff:ff", event.ofp.in_port, "ff:ff:ff:ff:ff:ff", 
+    of.OFPP_ALL))
 
 # BAD SWITCH Implementation
 # This is an obvious but problematic implementation of switch that
 # routes based on destination MAC addresses. 
-def _handle_BadSwitch_PacketIn (event):
+def _handle_badswitch_packetin (event):
   packet = event.parsed
 
   # Learn the source and fill up routing table
@@ -144,7 +146,7 @@ def _handle_BadSwitch_PacketIn (event):
 # destination MAC address is detected it then add a new flow 
 # identifying the source destination pair. The routing table is updated
 # using the detected destination MAC address to the destination port.
-def _handle_Pair_PacketIn (event):
+def _handle_pairswitch_packetin (event):
   packet = event.parsed
 
   # Learn the source and fill up routing table
@@ -179,7 +181,7 @@ def _handle_Pair_PacketIn (event):
 # SMARTER PAIR-WISE MATCH SWITCH Implementation
 # This is an implementation of an ideal pair switch. This optimizes the
 # previous example by adding both direction in one entry.
-def _handle_IdealPair_PacketIn (event):
+def _handle_idealpairswitch_packetin (event):
   packet = event.parsed
 
   # Learn the source and fill up routing table
@@ -226,11 +228,12 @@ def _handle_IdealPair_PacketIn (event):
 # registered appropriately. Uncomment the hub/switch you would like 
 # to test. Only one at a time please.
 def launch ():
-  #core.openflow.addListenerByName("PacketIn", _handle_DumbHub_PacketIn)
-  #core.openflow.addListenerByName("PacketIn", _handle_PairHub_PacketIn)
-  #core.openflow.addListenerByName("PacketIn", _handle_LazyHub_PacketIn)
-  #core.openflow.addListenerByName("PacketIn", _handle_BadSwitch_PacketIn)
-  #core.openflow.addListenerByName("PacketIn", _handle_Pair_PacketIn)
-  core.openflow.addListenerByName("PacketIn", _handle_IdealPair_PacketIn)
+  #core.openflow.addListenerByName("PacketIn", _handle_dumbhub_packetin)
+  #core.openflow.addListenerByName("PacketIn", _handle_pairhub_packetin)
+  #core.openflow.addListenerByName("PacketIn", _handle_lazyhub_packetin)
+  #core.openflow.addListenerByName("PacketIn", _handle_badswitch_packetin)
+  #core.openflow.addListenerByName("PacketIn", _handle_pairswitch_packetin)
+  core.openflow.addListenerByName("PacketIn", 
+    _handle_idealpairswitch_packetin)
 
   log.info("Switch Tutorial is running.")
