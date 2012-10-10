@@ -56,9 +56,9 @@ def send_packet (event, dst_port = of.OFPP_ALL):
 
 # Optimal method for resending a packet
 def resend_packet (event, dst_port = of.OFPP_ALL):
-  msg = of.ofp_packet_out(resend = event.ofp)
+  msg = of.ofp_packet_out(data = event.ofp)
   msg.actions.append(of.ofp_action_output(port = dst_port))
-  msg.send(event.connection)
+  event.connection.send(msg)
 
 # DUMB HUB Implementation
 # This is an implementation of a broadcast hub but all packets go 
@@ -78,27 +78,29 @@ def _handle_pairhub_packetin (event):
 
   # Create flow that simply broadcasts any packet received
   msg = of.ofp_flow_mod()
+  msg.data = event.ofp
   msg.idle_timeout = 10
   msg.hard_timeout = 30
   msg.match.dl_src = packet.src
   msg.match.dl_dst = packet.dst
   msg.actions.append(of.ofp_action_output(port = of.OFPP_ALL))
-  msg.send(event.connection, resend = event.ofp)
+  event.connection.send(msg)
 
   log.debug("Installing %s.%i -> %s.%i" %
     (packet.src, event.ofp.in_port, packet.dst, of.OFPP_ALL))
 
 # LAZY HUB Implementation (How hubs typically are)
 # This is an implementation of a broadcast hub with flows installed.
-def _handle_lazyHub_packetin (event):
+def _handle_lazyhub_packetin (event):
   packet = event.parsed
 
   # Create flow that simply broadcasts any packet received
   msg = of.ofp_flow_mod()
+  msg.data = event.ofp
   msg.idle_timeout = 10
   msg.hard_timeout = 30
   msg.actions.append(of.ofp_action_output(port = of.OFPP_ALL))
-  msg.send(event.connection, resend = event.ofp)
+  event.connection.send(msg)
 
   log.debug("Installing %s.%i -> %s.%i" %
     ("ff:ff:ff:ff:ff:ff", event.ofp.in_port, "ff:ff:ff:ff:ff:ff", of.OFPP_ALL))
@@ -118,7 +120,7 @@ def _handle_badswitch_packetin (event):
   msg.hard_timeout = 30
   msg.match.dl_dst = packet.src
   msg.actions.append(of.ofp_action_output(port = event.port))
-  msg.send(event.connection)
+  event.connection.send(msg)
 
   log.debug("Installing %s.%i -> %s.%i" %
     ("ff:ff:ff:ff:ff:ff", event.ofp.in_port, packet.src, event.port))
@@ -173,12 +175,13 @@ def _handle_pairswitch_packetin (event):
     # This is the packet that just came in -- we want to
     # install the rule and also resend the packet.
     msg = of.ofp_flow_mod()
+    msg.data = event.ofp
     msg.idle_timeout = 10
     msg.hard_timeout = 30
     msg.match.dl_src = packet.src
     msg.match.dl_dst = packet.dst
     msg.actions.append(of.ofp_action_output(port = dst_port))
-    msg.send(event.connection, resend = event.ofp)
+    event.connection.send(msg)
 
     log.debug("Installing %s.%i -> %s.%i" %
       (packet.src, event.ofp.in_port, packet.dst, dst_port))
@@ -213,17 +216,18 @@ def _handle_idealpairswitch_packetin (event):
     msg.match.dl_dst = packet.src
     msg.match.dl_src = packet.dst
     msg.actions.append(of.ofp_action_output(port = event.port))
-    msg.send(event.connection)
+    event.connection.send(msg)
     
     # This is the packet that just came in -- we want to
     # install the rule and also resend the packet.
     msg = of.ofp_flow_mod()
+    msg.data = event.ofp
     msg.idle_timeout = 10
     msg.hard_timeout = 30
     msg.match.dl_src = packet.src
     msg.match.dl_dst = packet.dst
     msg.actions.append(of.ofp_action_output(port = dst_port))
-    msg.send(event.connection, resend = event.ofp)
+    event.connection.send(msg)
 
     log.debug("Installing %s.%i -> %s.%i AND %s.%i -> %s.%i" %
       (packet.dst, dst_port, packet.src, event.ofp.in_port,
