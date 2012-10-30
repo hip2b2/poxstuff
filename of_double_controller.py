@@ -47,8 +47,6 @@ def createDoubleControllerNetwork():
 
     # Start command line 
     net.build()
-    c0.start()
-    c1.start()
     s0.start([c0])
     s1.start([c1])
     CLI(net)
