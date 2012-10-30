@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # Copyright 2012 William Yu
 # wyu@ateneo.edu
+#
+# Double Controller Test
 # 
 from mininet.net import Mininet
 from mininet.node import Controller, OVSKernelSwitch, RemoteController
