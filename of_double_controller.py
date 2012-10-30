@@ -1,8 +1,6 @@
 #!/usr/bin/python
 # Copyright 2012 William Yu
 # wyu@ateneo.edu
-#
-# Double Controller Test
 # 
 from mininet.net import Mininet
 from mininet.node import Controller, OVSKernelSwitch, RemoteController
@@ -15,8 +13,10 @@ def createDoubleControllerNetwork():
 
     # Create an empty network.
     net = Mininet(switch=OVSKernelSwitch)
-    c0 = net.addController('c0', controller=RemoteController)
-    c1 = net.addController('c1', controller=RemoteController)
+    c0 = net.addController('c0', controller=RemoteController, 
+      defaultIP="127.0.0.1", port=6633)
+    c1 = net.addController('c1', controller=RemoteController, 
+      defaultIP="127.0.0.1", port=6644)
 
     # Creating nodes in the network.
     h0 = net.addHost('h0')
@@ -39,11 +39,6 @@ def createDoubleControllerNetwork():
     h3.setIP(h3int, '192.168.1.67', 26)
 
     # Attaching Controllers to Switches
-    net.build()
-    c0.start()
-    c1.start()
-    s0.start([c0])
-    s1.start([c1])
 
     # dump stuff on the screen
     info( '*** Network state:\n' )
@@ -51,7 +46,11 @@ def createDoubleControllerNetwork():
         info( str( node ) + '\n' )
 
     # Start command line 
-    net.start()
+    net.build()
+    c0.start()
+    c1.start()
+    s0.start([c0])
+    s1.start([c1])
     CLI(net)
     net.stop()
 
