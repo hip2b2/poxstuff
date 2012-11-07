@@ -31,6 +31,7 @@ def createDoubleControllerNetwork():
     h1int, s0int = createLink(h1, s0)
     h2int, s1int = createLink(h2, s1)
     h3int, s1int = createLink(h3, s1)
+    s0int, s1int = createLink(s0, s1)
 
     # Configuration of IP addresses in interfaces
     h0.setIP(h0int, '192.168.1.2', 26)
@@ -38,18 +39,32 @@ def createDoubleControllerNetwork():
     h2.setIP(h2int, '192.168.1.66', 26)
     h3.setIP(h3int, '192.168.1.67', 26)
 
+    # Start network
+    net.build()
+
     # Attaching Controllers to Switches
+    s0.start([c0])
+    s1.start([c1])
+
+    # Setting interface only routes and not default routes
+    h0.cmd("route del -net 0.0.0.0")
+    h1.cmd("route del -net 0.0.0.0")
+    h2.cmd("route del -net 0.0.0.0")
+    h3.cmd("route del -net 0.0.0.0")
+    h0.cmd("route add -net 192.168.1.0 netmask 255.255.255.192 " + h0int)
+    h1.cmd("route add -net 192.168.1.0 netmask 255.255.255.192 " + h1int)
+    h2.cmd("route add -net 192.168.1.64 netmask 255.255.255.192 " + h2int)
+    h3.cmd("route add -net 192.168.1.64 netmask 255.255.255.192 " + h3int)
 
     # dump stuff on the screen
     info( '*** Network state:\n' )
-    for node in c0, c1, s0, s1, h0, h1:
+    for node in c0, c1, s0, s1, h0, h1, h2, h3:
         info( str( node ) + '\n' )
 
     # Start command line 
-    net.build()
-    s0.start([c0])
-    s1.start([c1])
     CLI(net)
+
+    # Stop network
     net.stop()
 
 if __name__ == '__main__':
