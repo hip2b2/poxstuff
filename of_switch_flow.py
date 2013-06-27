@@ -131,8 +131,34 @@ class Tutorial (object):
       log.debug("installing flow for %s.%i -> %s.%i" %
              (packet.src, packet_in.in_port, packet.dst, port))
 
+"""
+      # create new flow with match record set to match entire record
+      # what is wrong with this?
       msg = of.ofp_flow_mod()
       msg.match = of.ofp_match.from_packet(packet)
+      msg.idle_timeout = 10
+      msg.hard_timeout = 30
+      msg.actions.append(of.ofp_action_output(port = port))
+      msg.buffer_id = packet_in.buffer_id
+      self.connection.send(msg)
+"""
+"""
+      # create new flow with match record set to only match destination
+      # what is wrong with this?
+      msg = of.ofp_flow_mod()
+      msg.match.dl_dst = packet.dst
+      msg.idle_timeout = 10
+      msg.hard_timeout = 30
+      msg.actions.append(of.ofp_action_output(port = port))
+      msg.buffer_id = packet_in.buffer_id
+      self.connection.send(msg)
+"""
+
+      # create new flow with match record set to only match destination
+      # what is wrong with this?
+      msg = of.ofp_flow_mod()
+      msg.match.dl_dst = packet.dst
+      msg.match.dl_src = packet.src
       msg.idle_timeout = 10
       msg.hard_timeout = 30
       msg.actions.append(of.ofp_action_output(port = port))
